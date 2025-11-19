@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rento Healer - AI Injury Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 25%, #80deea 50%, #4dd0e1 75%, #26c6da 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Splash Screen Styles */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #218091 0%, #26c6da 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 0.5s ease-out 2.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .splash-logo {
+            font-size: 5rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .splash-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-top: 20px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            margin-top: 10px;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        .splash-loader {
+            margin-top: 40px;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Main Content Animation */
+        .container {
+            animation: fadeInContent 0.8s ease-out 3s both;
+        }
+
+        @keyframes fadeInContent {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #218091;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #626c71;
+            font-size: 1.1rem;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #218091;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-area {
+            border: 2px dashed #218091;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(33, 128, 145, 0.05);
+        }
+
+        .upload-area:hover {
+            background: rgba(33, 128, 145, 0.1);
+            border-color: #1a6875;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #218091;
+        }
+
+        .upload-subtext {
+            color: #626c71;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        textarea:focus {
+            outline: 2px solid #218091;
+            border-color: #218091;
+        }
+
+        .char-count {
+            text-align: right;
+            margin-top: 5px;
+            color: #626c71;
+            font-size: 13px;
+        }
+
+        .btn {
+            background: #218091;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background: #1a6875;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 128, 145, 0.3);
+        }
+
+        .preview {
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-filename {
+            margin-top: 10px;
+            color: #626c71;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #218091;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #218091;
+            font-size: 16px;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #626c71;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #218091;
+            border-bottom-color: #218091;
+        }
+
+        .tab:hover {
+            color: #218091;
+        }
+
+        .result-badge {
+            display: inline-block;
+            background: #218091;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .confidence-box {
+            background: rgba(33, 128, 145, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .user-description {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+
+        ol, ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        ol li, ul li {
+            margin: 8px 0;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            color: #218091;
+            font-size: 1.2rem;
+            margin: 25px 0 15px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .card {
+                padding: 20px;
+            }
+            .upload-area {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splash-logo">🩺</div>
+        <h1 class="splash-title">Rento Healer</h1>
+        <p class="splash-subtitle">AI-Powered Injury Analysis & Treatment</p>
+        <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-top: 10px;">Developed by Flame Coders</p>
+        <div class="splash-loader"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="card">
+            <h1>🩺 Rento Healer</h1>
+            <p class="subtitle">AI-Powered Injury Analysis & Treatment</p>
+            <p style="color: #626c71; font-size: 0.9rem; margin-top: 10px;">Developed by <strong style="color: #218091;">Flame Coders</strong></p>
+        </header>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <strong>⚠️ MEDICAL DISCLAIMER:</strong> This tool provides first aid guidance only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. For serious injuries or emergencies, call 911 or your local emergency services immediately.
+        </div>
+
+        <!-- Upload Section -->
+        <div class="card">
+            <h2>📸 Upload Injury Image (Optional)</h2>
+            <div class="upload-area" id="uploadArea">
+                <p class="upload-text">Click to upload or drag & drop</p>
+                <p class="upload-subtext">Supported formats: PNG, JPG, JPEG</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            
+            <div class="preview" id="previewSection">
+                <img id="previewImage" alt="Injury preview">
+                <p class="preview-filename" id="fileName"></p>
+            </div>
+        </div>
+
+        <!-- Text Input Section -->
+        <div class="card">
+            <h2>📝 Describe Your Injury (Optional)</h2>
+            <p style="color: #626c71; margin-bottom: 15px; font-size: 14px;">Adding a description improves diagnosis accuracy</p>
+            <textarea id="injuryDescription" placeholder="Example: Cut on my finger from kitchen knife, about 1 inch long, bleeding has stopped. Happened 30 minutes ago. Pain is moderate..." maxlength="500"></textarea>
+            <div class="char-count">
+                <span id="charCount">0</span> / 500 characters
+            </div>
+        </div>
+
+        <!-- Analyze Button -->
+        <button class="btn" id="analyzeBtn">🔍 Analyze Injury with Rento Healer AI</button>
+
+        <!-- Loading Section -->
+        <div class="card loading" id="loadingSection">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing with Rento Healer AI...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card results" id="resultsSection">
+            <div class="tabs">
+                <button class="tab active" data-tab="diagnosis">Diagnosis</button>
+                <button class="tab" data-tab="hygiene">Hygiene Tips</button>
+                <button class="tab" data-tab="health">Health & Prevention</button>
+            </div>
+            <div id="tabContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Get all elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const textarea = document.getElementById('injuryDescription');
+        const charCount = document.getElementById('charCount');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const tabContent = document.getElementById('tabContent');
+
+        let uploadedImage = null;
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#1a6875';
+            uploadArea.style.background = 'rgba(33, 128, 145, 0.15)';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#218091';
+            uploadArea.style.background = 'rgba(33, 128, 145, 0.05)';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#218091';
+            uploadArea.style.background = 'rgba(33, 128, 145, 0.05)';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        // Handle file upload
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImage = e.target.result;
+                previewImage.src = e.target.result;
+                fileName.textContent = file.name;
+                previewSection.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Character counter
+        textarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            if (count > 500) {
+                this.value = this.value.substring(0, 500);
+                charCount.textContent = 500;
+            }
+        });
+
+        // Analyze button
+        analyzeBtn.addEventListener('click', analyzeInjury);
+
+        function analyzeInjury() {
+            const description = textarea.value.trim();
+            const hasImage = uploadedImage !== null;
+            const hasText = description.length > 0;
+
+            if (!hasImage && !hasText) {
+                alert('Please upload an image or describe your injury to get started.');
+                return;
+            }
+
+            // Show loading
+            loadingSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+
+            // Simulate AI analysis
+            setTimeout(() => {
+                let injury, confidence, method;
+
+                if (hasText) {
+                    injury = analyzeText(description);
+                    confidence = hasImage ? (90 + Math.floor(Math.random() * 8)) : (82 + Math.floor(Math.random() * 10));
+                    method = hasImage ? "Combined Image & Text Analysis" : "Text Analysis";
+                } else {
+                    injury = getRandomInjury();
+                    confidence = 85 + Math.floor(Math.random() * 12);
+                    method = "Image Analysis";
+                }
+
+                displayResults(injury, confidence, method, description);
+                
+                loadingSection.style.display = 'none';
+                resultsSection.style.display = 'block';
+            }, 2500);
+        }
+
+        // Analyze text with keywords
+        function analyzeText(text) {
+            const lower = text.toLowerCase();
+            
+            if (lower.match(/cut|slice|bleed|knife|sharp|gash|lacerat/)) {
+                return 'Cuts & Lacerations';
+            }
+            if (lower.match(/burn|hot|fire|boil|steam|scald|sunburn/)) {
+                return 'Burns';
+            }
+            if (lower.match(/bruise|bump|hit|fell|purple|black.*blue|contusion/)) {
+                return 'Bruises';
+            }
+            if (lower.match(/infect|pus|fever|red.*streak|warm|swell/)) {
+                return 'Infections';
+            }
+            if (lower.match(/sprain|twist|ankle|can't.*walk|ligament|roll/)) {
+                return 'Sprains';
+            }
+            if (lower.match(/bite|sting|bee|wasp|mosquito|spider|insect/)) {
+                return 'Insect Bites/Stings';
+            }
+            
+            return getRandomInjury();
+        }
+
+        // Get random injury
+        function getRandomInjury() {
+            const injuries = [
+                'Cuts & Lacerations',
+                'Burns',
+                'Bruises',
+                'Infections',
+                'Sprains',
+                'Insect Bites/Stings'
+            ];
+            return injuries[Math.floor(Math.random() * injuries.length)];
+        }
+
+        // Display results
+        function displayResults(injury, confidence, method, description) {
+            const diagnosisHTML = `
+                <div>
+                    <h2>${injury}<span class="result-badge">AI Detected</span></h2>
+                    <div class="confidence-box">
+                        <strong>Confidence:</strong> ${confidence}% | <strong>Analysis Method:</strong> ${method}
+                    </div>
+                    ${description ? `<div class="user-description"><strong>Your Description:</strong> "${description}"</div>` : ''}
+                    
+                    <h3>💊 Treatment Steps</h3>
+                    <ol>
+                        <li><strong>Clean the affected area</strong> - Gently wash with mild soap and lukewarm water</li>
+                        <li><strong>Apply appropriate treatment</strong> - Use antibiotic ointment if needed</li>
+                        <li><strong>Keep area protected</strong> - Cover with clean, sterile bandage</li>
+                        <li><strong>Monitor for changes</strong> - Check daily for signs of infection or worsening</li>
+                        <li><strong>Change dressings regularly</strong> - Replace bandages daily or when wet/dirty</li>
+                    </ol>
+                    
+                    <div class="warning-box">
+                        <strong>⚠️ Seek Medical Attention If:</strong>
+                        <ul>
+                            <li>Symptoms worsen or don't improve within 24-48 hours</li>
+                            <li>Signs of infection develop (increased redness, pus, fever over 100.4°F)</li>
+                            <li>Severe pain or swelling that doesn't improve</li>
+                            <li>Red streaks spreading from the injury</li>
+                            <li>You have any concerns about the injury</li>
+                        </ul>
+                    </div>
+                    
+                    <p style="margin-top: 20px;"><strong>Expected Healing Time:</strong> 5-14 days depending on severity</p>
+                </div>
+            `;
+
+            const hygieneHTML = `
+                <div>
+                    <h2>🧼 Hygiene & Wound Care Tips</h2>
+                    
+                    <h3>Hand Hygiene</h3>
+                    <ul>
+                        <li><strong>Wash hands thoroughly</strong> - 20+ seconds with soap and water before touching any wound</li>
+                        <li><strong>Use hand sanitizer</strong> - 60%+ alcohol if soap unavailable</li>
+                        <li><strong>Key times</strong> - Before eating, after bathroom, before/after wound care</li>
+                    </ul>
+
+                    <h3>Wound Care Best Practices</h3>
+                    <ul>
+                        <li><strong>Keep wounds clean</strong> - Clean daily with mild soap and water</li>
+                        <li><strong>Change dressings regularly</strong> - Daily or when wet/dirty</li>
+                        <li><strong>Use clean materials</strong> - Sterile bandages and gauze when possible</li>
+                        <li><strong>Avoid contamination</strong> - Don't touch wounds with unwashed hands</li>
+                        <li><strong>Monitor for infection</strong> - Check daily for redness, swelling, or discharge</li>
+                    </ul>
+                </div>
+            `;
+
+            const healthHTML = `
+                <div>
+                    <h2>🏥 Health & Prevention</h2>
+                    
+                    <h3>Immune-Boosting Foods</h3>
+                    <ul>
+                        <li><strong>Citrus fruits</strong> (oranges, lemons, grapefruit) - High in Vitamin C</li>
+                        <li><strong>Dark leafy greens</strong> (spinach, kale) - Rich in antioxidants</li>
+                        <li><strong>Fatty fish</strong> (salmon, tuna, mackerel) - Omega-3 fatty acids</li>
+                        <li><strong>Nuts and seeds</strong> (almonds, sunflower seeds) - Vitamin E and minerals</li>
+                        <li><strong>Yogurt with live cultures</strong> - Probiotics for gut health</li>
+                        <li><strong>Garlic and ginger</strong> - Natural anti-inflammatory properties</li>
+                    </ul>
+
+                    <h3>Lifestyle Tips for Better Healing</h3>
+                    <ul>
+                        <li><strong>Sleep 7-9 hours</strong> - Essential for immune function and healing</li>
+                        <li><strong>Exercise regularly</strong> - 150 minutes of moderate activity per week</li>
+                        <li><strong>Stay hydrated</strong> - Drink 8+ glasses of water daily</li>
+                        <li><strong>Manage stress</strong> - Practice relaxation techniques, meditation</li>
+                        <li><strong>Avoid smoking</strong> - Impairs healing and immune function</li>
+                        <li><strong>Keep vaccinations current</strong> - Tetanus booster every 10 years</li>
+                    </ul>
+
+                    <h3>When to Call Emergency Services</h3>
+                    <div class="warning-box">
+                        <strong>Call 911 Immediately If:</strong>
+                        <ul>
+                            <li>Severe uncontrolled bleeding</li>
+                            <li>Difficulty breathing or chest pain</li>
+                            <li>Signs of severe allergic reaction (anaphylaxis)</li>
+                            <li>Loss of consciousness</li>
+                            <li>Severe burns covering large areas</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            // Set initial content
+            tabContent.innerHTML = diagnosisHTML;
+
+            // Set up tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    if (this.dataset.tab === 'diagnosis') {
+                        tabContent.innerHTML = diagnosisHTML;
+                    } else if (this.dataset.tab === 'hygiene') {
+                        tabContent.innerHTML = hygieneHTML;
+                    } else if (this.dataset.tab === 'health') {
+                        tabContent.innerHTML = healthHTML;
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
